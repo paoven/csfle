@@ -28,9 +28,7 @@ class ConsumerProperties {
         settings.setProperty("schema.registry.basic.auth.user.info", "<SR API Key>:<SR API Secret>")
 
         // Encryption
-        settings.setProperty("rule.executors._default_.param.tenant.id", "<tenant ID>")
-        settings.setProperty("rule.executors._default_.param.client.id", "<client ID>")
-        settings.setProperty("rule.executors._default_.param.client.secret", "<secret value>")
+        settings.setProperty("rule.executors._default_.param.token.id", "root-token")
 
         return settings
     }

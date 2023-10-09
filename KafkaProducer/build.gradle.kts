@@ -28,7 +28,7 @@ dependencies {
     implementation("com.google.code.gson:gson:2.8.8")
 
     implementation("io.confluent:kafka-avro-serializer:7.4.2")
-    implementation("io.confluent:kafka-schema-registry-client-encryption-azure:7.4.2")
+    implementation("io.confluent:kafka-schema-registry-client-encryption-hcvault:7.4.2")
 }
 
 val fatJar = task("fatJar", type = Jar::class) {

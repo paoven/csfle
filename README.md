@@ -4,9 +4,8 @@ This repository provides a step by step demo of the Confluent Cloud feature [Cli
 As of today, this feature is in Early Access Program.
 
 Once GA, it is planned to have different branches containing (at least)
-- [x] Azure Key Vault without Confluent access to the Key Encryption Key
-- [ ] Azure Key Vault with Confluent access to the Key Encryption Key
-- [ ] HashiCorp Vault with Confluent access to the Key Encryption Key
+- [x] Azure Key Vault
+- [x] HashiCorp Vault
 
 ## Prerequisites
 
@@ -35,28 +34,20 @@ producer and consumer application with Kotlin.
 We first need to create a tag on which we apply the encryption later, such as `PII`.
 As of today, we need to create the tag in the Stream Catalog first, see the [documentation](https://docs.confluent.io/platform/current/schema-registry/fundamentals/data-contracts.html#tags) of Data Contracts.
 
-## Azure Key Vault without Confluent access to the Key Encryption Key
+## HashiCorp Vault 
+We need to start HashiCorp Vault locally via docker:
 
-### Azure App registration
+```shell
+docker-compose up -d
+```
 
-In Azure AD (Entra ID), we create an app with a secret, see this [Quickstart documentation](https://learn.microsoft.com/en-us/azure/active-directory/develop/quickstart-register-app).
-Copy the
-* tenant ID
-* client ID
-* secret value (you need to copy it directly after creation)
+We can then log in under `http://localhost:8200/` with `root-token`
 
-### Azure Key Vault
+Under enable new secret engine we create a transit and a key.
 
-Create a Key Vault and a key. Copy the Key Identifier as displayed below
+![](HCVaultKey.png)
 
-![](AzureKey.png)
 
-### Azure Assign a Key Vault access policy
-
-In the Key Vault, we use Access policies to grant permission for the key to the registered application, see the [documentation](https://learn.microsoft.com/en-us/azure/key-vault/general/assign-access-policy?tabs=azure-portal).
-We provide "All Key Permissions" (in production we recommend following the principle of least privilege).
-
-![](AzureKeyAccess.png)
 
 ## Register Schema
 
@@ -93,9 +84,9 @@ curl --request POST --url 'https://psrc-abc.westeurope.azure.confluent.cloud/sub
         "mode": "WRITEREAD",
         "tags": ["PII"],
         "params": {
-           "encrypt.kek.name": "pneff-csfle",
-           "encrypt.kms.key.id": "<Azure Key Identifier>",
-           "encrypt.kms.type": "azure-kms"
+           "encrypt.kek.name": "pneff-csfle-hashicorp",
+           "encrypt.kms.key.id": "http://127.0.0.1:8200/transit/keys/csfle",
+           "encrypt.kms.type": "hcvault"
           },
         "onFailure": "ERROR,NONE"
         }
@@ -121,16 +112,14 @@ or in the CC UI
 We need to add
 ```shell
 implementation("io.confluent:kafka-avro-serializer:7.4.2")
-implementation("io.confluent:kafka-schema-registry-client-encryption-azure:7.4.2")
+implementation("io.confluent:kafka-schema-registry-client-encryption-hcvault:7.4.2")
 ```
 
 ### Producer
 We need to adjust the configuration by adding
 ```kotlin
 // Encryption
-settings.setProperty("rule.executors._default_.param.tenant.id", "<tenant ID>")
-settings.setProperty("rule.executors._default_.param.client.id", "<client ID>")
-settings.setProperty("rule.executors._default_.param.client.secret", "<secret value>")
+settings.setProperty("rule.executors._default_.param.token.id", "root-token")
 
 // Required since we manually create schemas
 settings.setProperty("use.latest.version", "true")
@@ -144,9 +133,6 @@ We continuously produce data with the encryption (the topic `pneff-csfle-test` n
 
 We can see in the logs that everything is working fine
 ```shell
-[ForkJoinPool.commonPool-worker-1] INFO  com.microsoft.aad.msal4j.AcquireTokenSilentSupplier - Returning token from cache
-[ForkJoinPool.commonPool-worker-1] INFO  com.azure.identity.ClientSecretCredential - Azure Identity => getToken() result for scopes [https://vault.azure.net/.default]: SUCCESS
-[ForkJoinPool.commonPool-worker-1] INFO  com.azure.core.implementation.AccessTokenCache - Acquired a new access token.
 [kafka-producer-network-thread | producer-2] INFO  KafkaProducer - event produced to pneff-csfle-test
 ```
 
