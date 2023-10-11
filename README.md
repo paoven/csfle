@@ -1,4 +1,4 @@
-# Client-Side Field Level Encryption (CSFLE) with HasiCorp Vault
+# Client-Side Field Level Encryption (CSFLE) with HashiCorp Vault
 
 This repository provides a step-by-step demo of the Confluent Cloud feature [Client-Side Field Level Encryption](http://staging-docs-independent.confluent.io/docs-cloud/PR/2843/current/clusters/csfle/overview.html).
 As of today, this feature is in Early Access Program.
