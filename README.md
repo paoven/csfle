@@ -11,7 +11,7 @@ As of today, this feature is in Early Access Program.
 
 ## Goal
 
-We will to produce personal data to Confluent Cloud in the following form 
+We will produce personal data to Confluent Cloud in the following form 
 ```
 {
     "id": "0",
